@@ -77,6 +77,15 @@ canvas { position: fixed; left: 0; top: 0; display: block; }
   transition: color .4s, transform .25s;
 }
 body.playing #bigscore, body.paused #bigscore, body.over #bigscore { opacity: 1; }
+#seal-hint {
+  position: fixed; left: 0; right: 0; top: 0; z-index: 6; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font: 700 11px/1.2 var(--f-ui); letter-spacing: .14em; text-transform: uppercase; color: rgba(214,200,255,0.72);
+  text-shadow: 0 1px 3px #000, 0 0 10px rgba(155,123,255,0.45); opacity: 0; transition: opacity .5s;
+}
+#seal-hint svg { width: 18px; height: 9px; color: var(--accent); animation: sealbob 2.4s ease-in-out infinite; }
+#seal-hint b { color: #f3edff; font-weight: 900; font-size: 13px; }
+#seal-hint.on { opacity: 1; }
+@keyframes sealbob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 #bigscore.pulse { color: rgba(191,233,255,0.16); transform: scale(1.03); transition: color .05s, transform .05s; }
 #gl { z-index: 2; }
 #fade-bottom {
@@ -307,15 +316,27 @@ body.playing #bigscore, body.paused #bigscore, body.over #bigscore { opacity: 1;
 .pad .arm.held .a-in { fill: url(#gSoul); }
 .pad .arm.held .a-arr { opacity: 1; }
 .pad .arm.fire .a-out { filter: drop-shadow(0 0 7px #b9a3ff); }
+.pad .arm.deny .a-in { fill: #5a1f2a; }
+.pad .arm.deny .a-out { filter: drop-shadow(0 0 6px #ff6a5a); }
+.pad .arm.deny { animation: armdeny .26s ease-out; }
+@keyframes armdeny { 0%,100% { transform: none; } 30% { transform: scale(.9); } }
 .pad.active .glow { opacity: .45; }
 .pad.active svg { filter: drop-shadow(0 0 12px rgba(155,123,255,0.5)) drop-shadow(0 3px 4px rgba(0,0,0,0.75)); }
 .pad.flash .glow { opacity: .9; transition: opacity 0s; }
 .pad .center-ico { transition: opacity .15s; }
 
 .drop { left: 50%; width: 82px; height: 92px; margin-left: -41px; bottom: calc(var(--pb) + 8px); }
-.cam { width: 50px; height: 50px; bottom: calc(var(--pb) + var(--pad) + 8px); }
-.cam.left { left: var(--pl); }
-.cam.right { right: var(--pr); }
+/* Kamera-Pfeile schraeg ueber der Aussenseite der Kreuze (35 Grad von oben), nicht mehr ganz darueber.
+   Das spart Hoehe, die der Turm bekommt. --cd = Abstand Kreuzmitte bis Pfeilmitte. */
+.cam { --cs: 46px; --cd: calc(var(--pad) / 2 + 25px); width: var(--cs); height: var(--cs);
+  bottom: calc(var(--pb) + var(--pad) / 2 + 0.82 * var(--cd) - var(--cs) / 2); }
+.cam.left { left: calc(var(--pl) + var(--pad) / 2 - 0.57 * var(--cd) - var(--cs) / 2); }
+.cam.right { right: calc(var(--pr) + var(--pad) / 2 - 0.57 * var(--cd) - var(--cs) / 2); }
+
+/* Grosse Steuerkreuze (Einstellung): Kreuze ca. 35 % groesser, das Wappen rueckt zwischen den Kreuzen nach oben */
+body.bigctl #controls { --pad: min(44vw, 180px); --pl: max(12px, calc(var(--sal) + 8px)); --pr: max(12px, calc(var(--sar) + 8px)); }
+body.bigctl .drop { width: 76px; height: 86px; margin-left: -38px; bottom: calc(var(--pb) + var(--pad) * 0.66); }
+body.bigctl .cam { --cs: 50px; }
 
 /* Pause oben im HUD */
 #btn-pause { position: relative; width: 44px; height: 44px; flex-shrink: 0; pointer-events: auto; margin-top: 4px; }
@@ -324,7 +345,7 @@ body.playing #bigscore, body.paused #bigscore, body.over #bigscore { opacity: 1;
 body.lefty #pad-move { left: auto; right: var(--pr); }
 body.lefty #pad-rot { right: auto; left: var(--pl); }
 
-@media (max-height: 700px) { #controls { --pad: min(29vw, 116px); } }
+@media (max-height: 700px) { #controls { --pad: min(29vw, 116px); } body.bigctl #controls { --pad: min(40vw, 150px); } }
 @media (max-width: 350px) { .drop { width: 70px; height: 78px; margin-left: -35px; } }
 
 /* Test-Anzeige fuer Beruehrungen (Einstellungen) */
@@ -347,6 +368,8 @@ body.lefty #pad-rot { right: auto; left: var(--pl); }
 }
 .tut-card p { margin: 8px 0 12px; }
 .tut-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tut-size { display: flex; gap: 10px; }
+.tut-size[hidden] { display: none; }
 .hand { position: fixed; width: 64px; height: 64px; left: 50%; top: 58%; margin-left: -20px; z-index: 13; fill: #e6d8bc; stroke: #0c0a09; stroke-width: 1.5; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.8)); pointer-events: none; }
 .hand .tap-ring { fill: none; stroke: var(--accent); stroke-width: 2.5; opacity: 0; }
 .hand.drag { animation: hdrag 2s ease-in-out infinite; }
@@ -439,6 +462,7 @@ body.lefty #pad-rot { right: auto; left: var(--pl); }
 <canvas id="bg"></canvas>
 <canvas id="rift"></canvas>
 <div id="bigscore" aria-hidden="true">0</div>
+<div id="seal-hint" aria-hidden="true"><svg viewBox="0 0 24 12"><path d="M2 11 L12 2 L22 11 L18 11 L12 5.6 L6 11 Z" fill="currentColor"/></svg><span>Siegel in <b id="seal-n">9</b> <span id="seal-u">Ebenen</span></span></div>
 <canvas id="gl"></canvas>
 <div id="fade-bottom"></div>
 <canvas id="fx"></canvas>
@@ -506,28 +530,28 @@ body.lefty #pad-rot { right: auto; left: var(--pl); }
         <circle cx="70" cy="70" r="54" fill="none" stroke="#d9d0f5" stroke-width=".8" opacity=".25"/>
         <path d="M58 133 C62 138 66 139 70 136 C74 139 78 138 82 133 C77 135 73 134 70 131 C67 134 63 135 58 133 Z" fill="url(#gPale)" opacity=".8"/>
       <g class="cross">
-      <g transform="rotate(-30 70 70) translate(3 0)"><g class="arm" data-dir="ur">
-        <path class="a-out" d="M95 58 L113 58 C116.5 58 118.5 59.5 120 62 L126 70 L120 78 C118.5 80.5 116.5 82 113 82 L95 82 C92.5 82 91.5 80 92.3 77.5 C93.6 73 93.6 67 92.3 62.5 C91.5 60 92.5 58 95 58 Z" fill="url(#gPale)"/>
-        <path class="a-in" d="M97.5 62 L112.5 62 C115 62 116.3 63 117.5 65 L121 70 L117.5 75 C116.3 77 115 78 112.5 78 L97.5 78 C96.3 78 95.8 77 96.2 75.6 C97.2 72 97.2 68 96.2 64.4 C95.8 63 96.3 62 97.5 62 Z" fill="url(#gVoid)"/>
-        <path class="a-arr" d="M103 63.5 L112.5 70 L103 76.5 L103 72.4 L107 70 L103 67.6 Z" fill="url(#gPale)"/>
+      <g transform="rotate(-30 70 70)"><g class="arm" data-dir="ur">
+        <path class="a-out" d="M88 61.5 L116 51 Q124 56.7 128 70 Q124 83.3 116 89 L88 78.5 Q85 70 88 61.5 Z" fill="url(#gPale)"/>
+        <path class="a-in" d="M91.5 64.5 L112 54.5 Q120 59.1 124 70 Q120 80.8 112 85.5 L91.5 75.5 Q88.5 70 91.5 64.5 Z" fill="url(#gVoid)"/>
+        <path class="a-arr" d="M105.4 62.5 L115.1 70 L105.4 77.5 L105.4 73.4 L109.9 70 L105.4 66.6 Z" fill="url(#gPale)"/>
       </g></g>
-      <g transform="rotate(30 70 70) translate(3 0)"><g class="arm" data-dir="dr">
-        <path class="a-out" d="M95 58 L113 58 C116.5 58 118.5 59.5 120 62 L126 70 L120 78 C118.5 80.5 116.5 82 113 82 L95 82 C92.5 82 91.5 80 92.3 77.5 C93.6 73 93.6 67 92.3 62.5 C91.5 60 92.5 58 95 58 Z" fill="url(#gPale)"/>
-        <path class="a-in" d="M97.5 62 L112.5 62 C115 62 116.3 63 117.5 65 L121 70 L117.5 75 C116.3 77 115 78 112.5 78 L97.5 78 C96.3 78 95.8 77 96.2 75.6 C97.2 72 97.2 68 96.2 64.4 C95.8 63 96.3 62 97.5 62 Z" fill="url(#gVoid)"/>
-        <path class="a-arr" d="M103 63.5 L112.5 70 L103 76.5 L103 72.4 L107 70 L103 67.6 Z" fill="url(#gPale)"/>
+      <g transform="rotate(30 70 70)"><g class="arm" data-dir="dr">
+        <path class="a-out" d="M88 61.5 L116 51 Q124 56.7 128 70 Q124 83.3 116 89 L88 78.5 Q85 70 88 61.5 Z" fill="url(#gPale)"/>
+        <path class="a-in" d="M91.5 64.5 L112 54.5 Q120 59.1 124 70 Q120 80.8 112 85.5 L91.5 75.5 Q88.5 70 91.5 64.5 Z" fill="url(#gVoid)"/>
+        <path class="a-arr" d="M105.4 62.5 L115.1 70 L105.4 77.5 L105.4 73.4 L109.9 70 L105.4 66.6 Z" fill="url(#gPale)"/>
       </g></g>
-      <g transform="rotate(150 70 70) translate(3 0)"><g class="arm" data-dir="dl">
-        <path class="a-out" d="M95 58 L113 58 C116.5 58 118.5 59.5 120 62 L126 70 L120 78 C118.5 80.5 116.5 82 113 82 L95 82 C92.5 82 91.5 80 92.3 77.5 C93.6 73 93.6 67 92.3 62.5 C91.5 60 92.5 58 95 58 Z" fill="url(#gPale)"/>
-        <path class="a-in" d="M97.5 62 L112.5 62 C115 62 116.3 63 117.5 65 L121 70 L117.5 75 C116.3 77 115 78 112.5 78 L97.5 78 C96.3 78 95.8 77 96.2 75.6 C97.2 72 97.2 68 96.2 64.4 C95.8 63 96.3 62 97.5 62 Z" fill="url(#gVoid)"/>
-        <path class="a-arr" d="M103 63.5 L112.5 70 L103 76.5 L103 72.4 L107 70 L103 67.6 Z" fill="url(#gPale)"/>
+      <g transform="rotate(150 70 70)"><g class="arm" data-dir="dl">
+        <path class="a-out" d="M88 61.5 L116 51 Q124 56.7 128 70 Q124 83.3 116 89 L88 78.5 Q85 70 88 61.5 Z" fill="url(#gPale)"/>
+        <path class="a-in" d="M91.5 64.5 L112 54.5 Q120 59.1 124 70 Q120 80.8 112 85.5 L91.5 75.5 Q88.5 70 91.5 64.5 Z" fill="url(#gVoid)"/>
+        <path class="a-arr" d="M105.4 62.5 L115.1 70 L105.4 77.5 L105.4 73.4 L109.9 70 L105.4 66.6 Z" fill="url(#gPale)"/>
       </g></g>
-      <g transform="rotate(-150 70 70) translate(3 0)"><g class="arm" data-dir="ul">
-        <path class="a-out" d="M95 58 L113 58 C116.5 58 118.5 59.5 120 62 L126 70 L120 78 C118.5 80.5 116.5 82 113 82 L95 82 C92.5 82 91.5 80 92.3 77.5 C93.6 73 93.6 67 92.3 62.5 C91.5 60 92.5 58 95 58 Z" fill="url(#gPale)"/>
-        <path class="a-in" d="M97.5 62 L112.5 62 C115 62 116.3 63 117.5 65 L121 70 L117.5 75 C116.3 77 115 78 112.5 78 L97.5 78 C96.3 78 95.8 77 96.2 75.6 C97.2 72 97.2 68 96.2 64.4 C95.8 63 96.3 62 97.5 62 Z" fill="url(#gVoid)"/>
-        <path class="a-arr" d="M103 63.5 L112.5 70 L103 76.5 L103 72.4 L107 70 L103 67.6 Z" fill="url(#gPale)"/>
+      <g transform="rotate(-150 70 70)"><g class="arm" data-dir="ul">
+        <path class="a-out" d="M88 61.5 L116 51 Q124 56.7 128 70 Q124 83.3 116 89 L88 78.5 Q85 70 88 61.5 Z" fill="url(#gPale)"/>
+        <path class="a-in" d="M91.5 64.5 L112 54.5 Q120 59.1 124 70 Q120 80.8 112 85.5 L91.5 75.5 Q88.5 70 91.5 64.5 Z" fill="url(#gVoid)"/>
+        <path class="a-arr" d="M105.4 62.5 L115.1 70 L105.4 77.5 L105.4 73.4 L109.9 70 L105.4 66.6 Z" fill="url(#gPale)"/>
       </g></g>
       </g>
-      <path class="hub" d="M70 60 L77.5 70 L70 80 L62.5 70 Z" fill="url(#gPale)" opacity=".55"/>
+      <path class="hub" d="M70 63 L75 70 L70 77 L65 70 Z" fill="url(#gPale)" opacity=".55"/>
       <circle cx="70" cy="70" r="2.4" fill="#f3edff" opacity=".8"/>
     </svg>
   </div>
@@ -552,27 +576,27 @@ body.lefty #pad-rot { right: auto; left: var(--pl); }
         <path d="M70 6.5 C105 6.5 133.5 35 133.5 70 C133.5 105 105 133.5 70 133.5 C35 133.5 6.5 105 6.5 70 C6.5 35 35 6.5 70 6.5 Z M70 10 C36.8 10 10 36.8 10 70 C10 103.2 36.8 130 70 130 C103.2 130 130 103.2 130 70 C130 36.8 103.2 10 70 10 Z" fill="url(#gPale)" fill-rule="evenodd" opacity=".85"/>
         <circle cx="70" cy="70" r="54" fill="none" stroke="#d9d0f5" stroke-width=".8" opacity=".25"/>
         <path d="M58 133 C62 138 66 139 70 136 C74 139 78 138 82 133 C77 135 73 134 70 131 C67 134 63 135 58 133 Z" fill="url(#gPale)" opacity=".8"/>
-      <path class="center-ico" transform="translate(70 70) scale(.7) translate(-70 -70)" d="M70 46 C83 46 94 57 94 70 C94 83 83 94 70 94 C61 94 53.5 89 49.5 81.5 L54.5 79.5 C57.5 85 63.3 88.7 70 88.7 C80.3 88.7 88.7 80.3 88.7 70 C88.7 59.7 80.3 51.3 70 51.3 C65 51.3 60.5 53.3 57.2 56.6 L62 60.5 L46.5 63.5 L48.5 48 L53.4 51.9 C57.6 48.2 63.5 46 70 46 Z" fill="url(#gPale)" opacity=".28"/>
+      <path class="center-ico" transform="translate(70 70) scale(.5) translate(-70 -70)" d="M70 46 C83 46 94 57 94 70 C94 83 83 94 70 94 C61 94 53.5 89 49.5 81.5 L54.5 79.5 C57.5 85 63.3 88.7 70 88.7 C80.3 88.7 88.7 80.3 88.7 70 C88.7 59.7 80.3 51.3 70 51.3 C65 51.3 60.5 53.3 57.2 56.6 L62 60.5 L46.5 63.5 L48.5 48 L53.4 51.9 C57.6 48.2 63.5 46 70 46 Z" fill="url(#gPale)" opacity=".5"/>
       <g class="cross">
       <g transform="rotate(0 70 70)"><g class="arm" data-dir="right">
-        <path class="a-out" d="M95 58 L113 58 C116.5 58 118.5 59.5 120 62 L126 70 L120 78 C118.5 80.5 116.5 82 113 82 L95 82 C92.5 82 91.5 80 92.3 77.5 C93.6 73 93.6 67 92.3 62.5 C91.5 60 92.5 58 95 58 Z" fill="url(#gPale)"/>
-        <path class="a-in" d="M97.5 62 L112.5 62 C115 62 116.3 63 117.5 65 L121 70 L117.5 75 C116.3 77 115 78 112.5 78 L97.5 78 C96.3 78 95.8 77 96.2 75.6 C97.2 72 97.2 68 96.2 64.4 C95.8 63 96.3 62 97.5 62 Z" fill="url(#gVoid)"/>
-        <path class="a-arr" d="M103 63.5 L112.5 70 L103 76.5 L103 72.4 L107 70 L103 67.6 Z" fill="url(#gPale)"/>
+        <path class="a-out" d="M86 58 L116 49 Q124 55.3 128 70 Q124 84.7 116 91 L86 82 Q83 70 86 58 Z" fill="url(#gPale)"/>
+        <path class="a-in" d="M89.5 61 L112 52.5 Q120 57.8 124 70 Q120 82.2 112 87.5 L89.5 79 Q86.5 70 89.5 61 Z" fill="url(#gVoid)"/>
+        <path class="a-arr" d="M104.4 62.5 L114.1 70 L104.4 77.5 L104.4 73.4 L108.9 70 L104.4 66.6 Z" fill="url(#gPale)"/>
       </g></g>
       <g transform="rotate(90 70 70)"><g class="arm" data-dir="down">
-        <path class="a-out" d="M95 58 L113 58 C116.5 58 118.5 59.5 120 62 L126 70 L120 78 C118.5 80.5 116.5 82 113 82 L95 82 C92.5 82 91.5 80 92.3 77.5 C93.6 73 93.6 67 92.3 62.5 C91.5 60 92.5 58 95 58 Z" fill="url(#gPale)"/>
-        <path class="a-in" d="M97.5 62 L112.5 62 C115 62 116.3 63 117.5 65 L121 70 L117.5 75 C116.3 77 115 78 112.5 78 L97.5 78 C96.3 78 95.8 77 96.2 75.6 C97.2 72 97.2 68 96.2 64.4 C95.8 63 96.3 62 97.5 62 Z" fill="url(#gVoid)"/>
-        <path class="a-arr" d="M103 63.5 L112.5 70 L103 76.5 L103 72.4 L107 70 L103 67.6 Z" fill="url(#gPale)"/>
+        <path class="a-out" d="M86 58 L116 49 Q124 55.3 128 70 Q124 84.7 116 91 L86 82 Q83 70 86 58 Z" fill="url(#gPale)"/>
+        <path class="a-in" d="M89.5 61 L112 52.5 Q120 57.8 124 70 Q120 82.2 112 87.5 L89.5 79 Q86.5 70 89.5 61 Z" fill="url(#gVoid)"/>
+        <path class="a-arr" d="M104.4 62.5 L114.1 70 L104.4 77.5 L104.4 73.4 L108.9 70 L104.4 66.6 Z" fill="url(#gPale)"/>
       </g></g>
       <g transform="rotate(180 70 70)"><g class="arm" data-dir="left">
-        <path class="a-out" d="M95 58 L113 58 C116.5 58 118.5 59.5 120 62 L126 70 L120 78 C118.5 80.5 116.5 82 113 82 L95 82 C92.5 82 91.5 80 92.3 77.5 C93.6 73 93.6 67 92.3 62.5 C91.5 60 92.5 58 95 58 Z" fill="url(#gPale)"/>
-        <path class="a-in" d="M97.5 62 L112.5 62 C115 62 116.3 63 117.5 65 L121 70 L117.5 75 C116.3 77 115 78 112.5 78 L97.5 78 C96.3 78 95.8 77 96.2 75.6 C97.2 72 97.2 68 96.2 64.4 C95.8 63 96.3 62 97.5 62 Z" fill="url(#gVoid)"/>
-        <path class="a-arr" d="M103 63.5 L112.5 70 L103 76.5 L103 72.4 L107 70 L103 67.6 Z" fill="url(#gPale)"/>
+        <path class="a-out" d="M86 58 L116 49 Q124 55.3 128 70 Q124 84.7 116 91 L86 82 Q83 70 86 58 Z" fill="url(#gPale)"/>
+        <path class="a-in" d="M89.5 61 L112 52.5 Q120 57.8 124 70 Q120 82.2 112 87.5 L89.5 79 Q86.5 70 89.5 61 Z" fill="url(#gVoid)"/>
+        <path class="a-arr" d="M104.4 62.5 L114.1 70 L104.4 77.5 L104.4 73.4 L108.9 70 L104.4 66.6 Z" fill="url(#gPale)"/>
       </g></g>
       <g transform="rotate(-90 70 70)"><g class="arm" data-dir="up">
-        <path class="a-out" d="M95 58 L113 58 C116.5 58 118.5 59.5 120 62 L126 70 L120 78 C118.5 80.5 116.5 82 113 82 L95 82 C92.5 82 91.5 80 92.3 77.5 C93.6 73 93.6 67 92.3 62.5 C91.5 60 92.5 58 95 58 Z" fill="url(#gPale)"/>
-        <path class="a-in" d="M97.5 62 L112.5 62 C115 62 116.3 63 117.5 65 L121 70 L117.5 75 C116.3 77 115 78 112.5 78 L97.5 78 C96.3 78 95.8 77 96.2 75.6 C97.2 72 97.2 68 96.2 64.4 C95.8 63 96.3 62 97.5 62 Z" fill="url(#gVoid)"/>
-        <path class="a-arr" d="M103 63.5 L112.5 70 L103 76.5 L103 72.4 L107 70 L103 67.6 Z" fill="url(#gPale)"/>
+        <path class="a-out" d="M86 58 L116 49 Q124 55.3 128 70 Q124 84.7 116 91 L86 82 Q83 70 86 58 Z" fill="url(#gPale)"/>
+        <path class="a-in" d="M89.5 61 L112 52.5 Q120 57.8 124 70 Q120 82.2 112 87.5 L89.5 79 Q86.5 70 89.5 61 Z" fill="url(#gVoid)"/>
+        <path class="a-arr" d="M104.4 62.5 L114.1 70 L104.4 77.5 L104.4 73.4 L108.9 70 L104.4 66.6 Z" fill="url(#gPale)"/>
       </g></g>
       </g>
     </svg>
@@ -657,6 +681,7 @@ body.lefty #pad-rot { right: auto; left: var(--pl); }
     <p id="tut-text"></p>
     <div class="tut-actions">
       <button class="btn-iron" id="tut-ok" hidden>Verstanden</button>
+      <span class="tut-size" id="tut-size" hidden><button class="btn-iron" id="tut-normal">Normal</button><button class="btn-iron" id="tut-big">Groß</button></span>
       <button class="btn-text" id="tut-skip">Überspringen</button>
     </div>
   </div>
@@ -792,7 +817,10 @@ OS.CONFIG = {
     followRate: 4.0,
     attractSpeedDeg: 9,      // Drehgeschwindigkeit im Titelbildschirm
     frameBottom: -0.9,       // Bildausschnitt im Spiel: von knapp unter dem Raster ...
-    frameTopAboveSeal: 1.8,  // ... bis etwas ueber das Siegel
+    frameTopAboveSeal: 1.8,  // ... bis hoechstens etwas ueber das Siegel
+    frameAboveSpawn: 3.2,    // mitwachsende Kamera: so viel Platz ueber der Startstelle neuer Steine
+    frameMinTop: 7.2,        // nie naeher als bis zu dieser Hoehe heranzoomen
+    zoomMs: 450,             // wie sanft die Kamera heraus- und hereinzoomt
     frameMargin: 1.06,       // etwas Luft rundherum
     frameMaxWidthShare: 0.9  // Turm nimmt hoechstens 90 % der Bildschirmbreite ein
   },
@@ -2043,7 +2071,7 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
       stats: { games: 0, layers: 0, cubes: 0, pieces: 0, bestLevel: 0, bestCombo: 0, bestChain: 0, storms: 0, playTimeSec: 0 },
       settings: {
         music: 0.5, sfx: 0.8, vibration: true, leftHanded: false,
-        sensitivity: 1.0, showTouches: false, ghost: true, dropLines: true, shake: true,
+        sensitivity: 1.0, bigControls: false, showTouches: false, ghost: true, dropLines: true, shake: true,
         quality: (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'niedrig' : 'hoch'
       },
       tutorialDone: false,
@@ -2241,12 +2269,13 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
       for (let i = 0; i < 6; i++) { x += (rnd() - 0.5) * 18; y += 6 + rnd() * 10; g.lineTo(x, y); }
       g.stroke();
     }
-    g.strokeStyle = 'rgba(255,250,240,0.35)'; g.lineWidth = 2; g.strokeRect(7, 7, 114, 114);
-    g.strokeStyle = 'rgba(18,14,22,0.92)'; g.lineWidth = 6; g.strokeRect(3, 3, 122, 122);
+    // Kraeftige dunkle Kante und grosse Rune: besser erkennbar, auch auf kleinen Bildschirmen
+    g.strokeStyle = 'rgba(255,250,240,0.4)'; g.lineWidth = 2.5; g.strokeRect(10, 10, 108, 108);
+    g.strokeStyle = 'rgba(14,10,18,0.97)'; g.lineWidth = 9; g.strokeRect(4.5, 4.5, 119, 119);
     if (glyph != null) {
       g.lineCap = 'square'; g.lineJoin = 'miter';
-      g.strokeStyle = 'rgba(255,255,255,0.45)'; g.lineWidth = 6; Runes.draw(g, 41, 37, 46, 56, glyph);
-      g.strokeStyle = 'rgba(28,20,40,0.78)'; g.lineWidth = 6; Runes.draw(g, 39, 35, 46, 56, glyph);
+      g.strokeStyle = 'rgba(255,255,255,0.5)'; g.lineWidth = 8.5; Runes.draw(g, 35, 30, 60, 70, glyph);
+      g.strokeStyle = 'rgba(24,16,36,0.88)'; g.lineWidth = 8.5; Runes.draw(g, 33, 28, 60, 70, glyph);
     }
     return c;
   }
@@ -2375,7 +2404,7 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
     act = null;
     level = st ? st.level : 1;
     if (st && st.active) R.onSpawn(st);
-    if (instant) view.focusInit = false;
+    if (instant) { view.focusInit = false; view.frameInit = false; }
   };
   R.setAttract = function (on) { view.attract = on; };
   R.setLevel = function (l) { level = l; };
@@ -2406,6 +2435,11 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
     view.azTarget += dir * 90;
   };
   R.cameraStep = () => state ? state.cameraStep : 0;
+  // Fuer die Siegel-Anzeige: ist das Siegel gerade im Bild, wie viele Ebenen fehlen noch?
+  R.frameInfo = function () {
+    if (!state || view.frameTop == null) return null;
+    return { sealVisible: view.frameTop >= state.seal + 0.6, dist: Math.max(0, state.seal - (view.stackTop || 0)) };
+  };
 
   // Bildschirmrichtungen (in px, y nach unten) der Weltachsen +x und +z fuer die Ziel-Kamerarichtung
   R.screenAxes = function () {
@@ -2445,11 +2479,19 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
 
     const size = state ? state.size : C.grid.size;
     const cosE = Math.cos(view.el * Math.PI / 180), sinE = Math.sin(view.el * Math.PI / 180);
-    // Im Spiel: fester Bildausschnitt, der ganze Turm vom Sockel bis zum Siegel passt in den freien Bereich
-    // zwischen HUD (oben) und Steuerfeldern (unten). Mehr Uebersicht, keine unruhige Kamerafahrt.
+    // Im Spiel: mitwachsender Bildausschnitt. Gezeigt wird immer der ganze Turm vom Sockel bis knapp ueber die
+    // Stelle, an der der naechste Stein erscheint (der startet immer spawn.gap Ebenen ueber dem hoechsten Wuerfel).
+    // Waechst der Turm, zoomt das Bild sanft heraus, bis es kurz vor dem Siegel die volle Hoehe zeigt.
+    // Der Zielwert aendert sich nur, wenn ein Stein landet oder Steine gebannt werden, nie waehrend man schiebt.
     if (insets && !view.attract && state) {
       const Hr = Math.max(180, ch - insets.top - insets.bottom);
-      const yLow = C.camera.frameBottom, yHigh = state.seal + C.camera.frameTopAboveSeal;
+      const sealTop = state.seal + C.camera.frameTopAboveSeal;
+      const stackTop = E.highest(state) + 1;
+      const wantTop = Math.min(sealTop, Math.max(C.camera.frameMinTop, stackTop + C.spawn.gap + C.camera.frameAboveSpawn));
+      if (view.frameTop == null || !view.frameInit) { view.frameTop = wantTop; view.frameInit = true; }
+      view.frameTop += (wantTop - view.frameTop) * (1 - Math.exp(-dt / C.camera.zoomMs));
+      view.stackTop = stackTop;
+      const yLow = C.camera.frameBottom, yHigh = view.frameTop;
       const extent = ((yHigh - yLow) * cosE + size * Math.SQRT2 * sinE) * C.camera.frameMargin;
       let wpp = extent / Hr;
       wpp = Math.max(wpp, (size * Math.SQRT2 + 1.2) / (C.camera.frameMaxWidthShare * cw));
@@ -2554,6 +2596,8 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
     act.rt = 0;
   };
   R.onBlocked = function () { if (act) act.wob = 1; };
+  // Verschieben geht nicht: Stein ruckt kurz in die Richtung und federt zurueck
+  R.onBump = function (dx, dz) { if (act && act.vis) act.vis = V.add(act.vis, [dx * 0.24, 0, dz * 0.24]); };
 
   R.onLock = function (e) {
     act = null;
@@ -2803,7 +2847,7 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
     } else if (cell.col >= 0) {
       // Runenfarbe, unten etwas dunkler fuer Tiefe
       const base = RUNECOL[cell.col] || [0.6, 0.6, 0.6];
-      col = base.map(v => v * (0.8 + 0.2 * clamp(y / Math.max(1, seal - 1), 0, 1)));
+      col = base.map(v => v * (0.9 + 0.1 * clamp(y / Math.max(1, seal - 1), 0, 1)));
     } else if (cell.k < 0) {
       col = [0.42, 0.4, 0.42];
     } else {
@@ -3853,30 +3897,41 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
       { name: 'move', el: padMove, shape: 'pad' },
       { name: 'rot', el: padRot, shape: 'pad' },
       { name: 'hard', el: dropBtn, shape: 'ellipse' },
-      { name: 'camL', el: camL, shape: 'rect' },
-      { name: 'camR', el: camR, shape: 'rect' },
+      { name: 'camL', el: camL, shape: 'round' },
+      { name: 'camR', el: camR, shape: 'round' },
       { name: 'pause', el: pauseBtn, shape: 'rect' }
     ];
   }
-  // Liefert das Steuerelement unter (x, y) mit vergroesserter Trefferflaeche, bei Ueberschneidung das naechstgelegene
+  // Liefert das Steuerelement unter (x, y). Zwei Durchgaenge:
+  // 1. Liegt der Finger auf der sichtbaren Flaeche eines Elements, gewinnt dieses Element. Die vergroesserte
+  //    Trefferflaeche eines Nachbarn (Wappen, Kamera-Pfeil) darf nie einen Arm "stehlen", den man sichtbar trifft.
+  // 2. Nur wenn der Finger daneben liegt, zaehlen die vergroesserten Trefferflaechen, der naechstgelegene gewinnt.
   function hitTest(x, y) {
-    let best = null, bd = Infinity;
+    const cands = [];
     for (const c of controlList()) {
       if (!c.el) continue;
       const r = c.el.getBoundingClientRect();
       if (!r.width || !r.height) continue;
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       const dx = x - cx, dy = y - cy;
-      let d;
-      if (c.shape === 'pad') d = Math.hypot(dx, dy) / (r.width / 2 * C.input.padHit);
-      else {
-        const rx = r.width / 2 + C.input.btnHitPx, ry = r.height / 2 + C.input.btnHitPx;
-        d = c.shape === 'ellipse' ? Math.hypot(dx / rx, dy / ry) : Math.max(Math.abs(dx) / rx, Math.abs(dy) / ry);
-      }
-      if (d <= 1 && d < bd) { bd = d; best = { c, cx, cy, rad: r.width / 2 }; }
+      const norm = (rx, ry) => c.shape === 'pad' ? Math.hypot(dx, dy) / rx
+        : c.shape === 'ellipse' ? Math.hypot(dx / rx, dy / ry)
+        : Math.max(Math.abs(dx) / rx, Math.abs(dy) / ry);
+      // Sichtbare Form: Kamera-Pfeile sind rund, das Wappen ist unten schmal (Schildform)
+      const vis = c.shape === 'round' ? Math.hypot(dx, dy) / (r.width / 2)
+        : c.shape === 'ellipse' ? Math.hypot(dx / (r.width * 0.42), dy / (r.height / 2))
+        : norm(r.width / 2, r.height / 2);
+      const big = c.shape === 'pad' ? Math.hypot(dx, dy) / (r.width / 2 * C.input.padHit)
+        : norm(r.width / 2 + C.input.btnHitPx, r.height / 2 + C.input.btnHitPx);
+      cands.push({ c, cx, cy, rad: r.width / 2, vis, big });
     }
+    let best = null;
+    for (const k of cands) if (k.vis <= 1 && (!best || k.vis < best.vis)) best = k;
+    if (best) return best;
+    for (const k of cands) if (k.big <= 1 && (!best || k.big < best.big)) best = k;
     return best;
   }
+  I._hitTest = hitTest;   // fuer Tests
 
   // Richtung im Kreuz aus der Fingerposition (Winkel zur Mitte). null = Mitte (tote Zone)
   function sector(rec, x, y) {
@@ -3902,10 +3957,14 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
     pad.classList.add('flash'); setTimeout(() => pad.classList.remove('flash'), 120);
   }
 
-  function moveStep(rec) {
+  function moveStep(rec, repeat) {
     const d = gridDirFor(ARM_VEC[rec.dir]);
-    if (act('move', d[0], d[1])) OS.Haptics.vibrate(C.haptics.move);
-    flash(padMove, rec.dir);
+    if (act('move', d[0], d[1], repeat ? 'rep' : undefined)) { OS.Haptics.vibrate(C.haptics.move); flash(padMove, rec.dir); }
+    else if (!repeat) deny(padMove, rec.dir);   // Wand im Weg: Arm zeigt das kurz an (sonst wirkt er kaputt)
+  }
+  function deny(pad, dir) {
+    const a = armEl(pad, dir);
+    if (a) { a.classList.remove('deny'); void a.getBoundingClientRect(); a.classList.add('deny'); setTimeout(() => a.classList.remove('deny'), 260); }
   }
   function stopRepeat(rec) { clearTimeout(rec.t1); clearInterval(rec.t2); rec.t1 = rec.t2 = 0; }
   function pressMove(rec, dir) {
@@ -3914,14 +3973,14 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
     setHeld(padMove, dir);
     moveStep(rec);
     rec.t1 = setTimeout(() => {
-      rec.t2 = setInterval(() => { if (accepts()) moveStep(rec); else stopRepeat(rec); }, C.input.repeatMs / speed());
+      rec.t2 = setInterval(() => { if (accepts()) moveStep(rec, true); else stopRepeat(rec); }, C.input.repeatMs / speed());
     }, C.input.repeatDelayMs);
   }
   function pressRot(rec, dir) {
     rec.dir = dir; rec.fired = true;
     setHeld(padRot, dir);
-    if (act(ROT_ACT[dir])) OS.Haptics.vibrate(C.haptics.rotate);
-    flash(padRot, dir);
+    if (act(ROT_ACT[dir])) { OS.Haptics.vibrate(C.haptics.rotate); flash(padRot, dir); }
+    else deny(padRot, dir);
   }
 
   // ---------- Beruehrungen verwalten ----------
@@ -4190,8 +4249,8 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
   U.fmt = fmt;
 
   U.init = function () {
-    ['bigscore', 'hud', 'controls', 'pop', 'next-slot', 'next-prog', 'next-runes', 'hud-level', 'hud-layers', 'hud-best',
-      'title-best', 'm-resume', 'm-play', 'tutorial', 'tut-text', 'tut-step', 'tut-ok', 'tut-skip', 'tut-hand',
+    ['bigscore', 'seal-hint', 'seal-n', 'seal-u', 'hud', 'controls', 'pop', 'next-slot', 'next-prog', 'next-runes', 'hud-level', 'hud-layers', 'hud-best',
+      'title-best', 'm-resume', 'm-play', 'tutorial', 'tut-text', 'tut-step', 'tut-ok', 'tut-size', 'tut-skip', 'tut-hand',
       'countdown', 'cd-num', 'modal', 'modal-text', 'modal-ok', 'modal-cancel',
       'over-score', 'over-ledger', 'over-record', 'stats-best', 'stats-ledger', 'settings-list', 'pause-info', 'danger-veil', 'gate']
       .forEach(id => { el[id] = $(id); });
@@ -4249,8 +4308,13 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
   // ---------- HUD ----------
   U.resetScore = function (v) { scoreShown = v || 0; scoreTarget = v || 0; el.bigscore.textContent = fmt(scoreShown); lastLevel = lastLayers = lastBest = lastProg = -1; };
 
+  let lastSealOn = false, lastSealN = -1, lastSealY = -1;
   U.update = function (dt, st, playing) {
-    if (!st) { OS.Render.setPreview(null, null); OS.Render.setInsets(null); return; }
+    if (!st) {
+      OS.Render.setPreview(null, null); OS.Render.setInsets(null);
+      if (lastSealOn) { lastSealOn = false; el['seal-hint'].classList.remove('on'); }
+      return;
+    }
     scoreTarget = st.score;
     if (scoreShown !== scoreTarget) {
       const diff = scoreTarget - scoreShown;
@@ -4277,7 +4341,19 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
       let ctlTop = window.innerHeight;
       el.controls.querySelectorAll('.cam, .pad, .drop').forEach(c => { const b = c.getBoundingClientRect(); if (b.height) ctlTop = Math.min(ctlTop, b.top); });
       OS.Render.setInsets(hudB + 6, window.innerHeight - ctlTop + 4);
-    } else OS.Render.setPreview(null, null);
+      // Siegel ausserhalb des Bilds (mitwachsende Kamera): kleine Anzeige oben, wie weit es noch ist
+      const fi = OS.Render.frameInfo();
+      const showSeal = !!(fi && !fi.sealVisible);
+      if (showSeal !== lastSealOn) { lastSealOn = showSeal; el['seal-hint'].classList.toggle('on', showSeal); }
+      if (showSeal) {
+        if (fi.dist !== lastSealN) { lastSealN = fi.dist; el['seal-n'].textContent = fi.dist; el['seal-u'].textContent = fi.dist === 1 ? 'Ebene' : 'Ebenen'; }
+        const y = Math.round(hudB + 4);
+        if (y !== lastSealY) { lastSealY = y; el['seal-hint'].style.top = y + 'px'; }
+      }
+    } else {
+      OS.Render.setPreview(null, null);
+      if (lastSealOn) { lastSealOn = false; el['seal-hint'].classList.remove('on'); }
+    }
   };
 
   U.soulTarget = function () {
@@ -4394,6 +4470,7 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
       { k: 'sfx', t: 'Effekte', type: 'range' },
       { k: 'vibration', t: 'Vibration', sub: 'Am iPhone ein leichtes Klopfen (ab iOS 18)', type: 'bool' },
       { k: 'leftHanded', t: 'Linkshänder', sub: 'Drehkreuz links, Steuerkreuz rechts', type: 'bool' },
+      { k: 'bigControls', t: 'Große Steuerkreuze', sub: 'Leichter zu treffen', type: 'bool' },
       { k: 'sensitivity', t: 'Tempo beim Gedrückthalten', sub: 'Wie schnell der Stein weiterläuft', type: 'range', min: 0.6, max: 1.8, step: 0.05 },
       { k: 'ghost', t: 'Landeplatz zeigen', type: 'bool' },
       { k: 'dropLines', t: 'Fallhilfe', type: 'bool' },
@@ -4465,8 +4542,16 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
   ];
   U.tutorial = function (step, sub) {
     if (step == null) { el.tutorial.classList.add('off'); return; }
-    const t = TUT[step];
     el.tutorial.classList.remove('off');
+    if (step === 'size') {
+      el['tut-step'].textContent = 'Vorab';
+      el['tut-text'].textContent = 'Wie groß sollen die Steuerkreuze sein? Das lässt sich später in den Einstellungen ändern.';
+      el['tut-ok'].hidden = true; el['tut-size'].hidden = false;
+      el['tut-hand'].style.display = 'none';
+      return;
+    }
+    el['tut-size'].hidden = true;
+    const t = TUT[step];
     el['tut-step'].textContent = (step + 1) + ' / ' + TUT.length;
     el['tut-text'].textContent = t.text;
     el['tut-ok'].hidden = !t.ok;
@@ -4573,6 +4658,7 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
     if (R.quality() !== s.quality) R.setQuality(s.quality);
     R.setSettings({ ghost: s.ghost, dropLines: s.dropLines });
     document.body.classList.toggle('lefty', !!s.leftHanded);
+    document.body.classList.toggle('bigctl', !!s.bigControls);
     if (!s.showTouches && OS.Input && OS.Input.debugReset) OS.Input.debugReset();
   }
 
@@ -4691,9 +4777,9 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
     playTime = 0;
     enterGame();
     handle(E.start(st));
-    tut = { step: 0, moves: 0, yaw: false, pitch: false };
+    tut = { step: 'size', moves: 0, yaw: false, pitch: false };
     mode = 'tutorial';
-    UI.tutorial(0);
+    UI.tutorial('size');
   }
   function tutorialProgress(name, ok) {
     if (!tut || !ok) return;
@@ -4703,6 +4789,12 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
       if (name === 'tipUp' || name === 'tipDown' || name === 'pitch') tut.pitch = true;
       if (tut.yaw && tut.pitch) { tut.step = 2; UI.tutorial(2); }
     } else if (tut.step === 2 && (name === 'hard' || name === 'lock')) { tut.step = 3; UI.tutorial(3); }
+  }
+  // Erste Tutorial-Frage: normale oder grosse Steuerkreuze
+  function chooseSize(big) {
+    S.setSetting('bigControls', !!big);
+    applySettings();
+    if (tut && tut.step === 'size') { tut.step = 0; requestAnimationFrame(() => UI.tutorial(0)); }
   }
   function finishTutorial() {
     S.data.tutorialDone = true; S.save();
@@ -4753,7 +4845,9 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
     for (const e of evs) {
       switch (e.type) {
         case 'spawn': R.onSpawn(st); log('Spawn', e.piece, 'naechster', e.next); break;
-        case 'move': if (!silent) A.play('move'); break;
+        case 'move': if (silent !== true) A.play('move'); break;
+        // Wand oder Turm im Weg: Stein stoesst sichtbar an, dumpfer Ton. Beim Gedrueckthalten nur einmal.
+        case 'moveblocked': if (silent !== 'rep') { R.onBump(e.dx, e.dz); A.play('blocked'); OS.Haptics.vibrate(C.haptics.blocked); } break;
         case 'rotate': R.onRotate(e); A.play('rotate'); break;
         case 'blocked': R.onBlocked(); A.play('blocked'); OS.Haptics.vibrate(C.haptics.blocked); break;
         case 'softdrop': A.play('soft'); break;
@@ -4911,6 +5005,8 @@ void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d)*2.0; float a=clamp(1.0-
     on('set-back', () => UI.show(settingsReturn));
 
     on('tut-ok', finishTutorial);
+    on('tut-normal', () => chooseSize(false));
+    on('tut-big', () => chooseSize(true));
     on('tut-skip', finishTutorial);
 
     // 5x schnell auf das Logo tippen: Debug-Panel
